@@ -1,28 +1,16 @@
 import PySimpleGUI as sg
-import random
-import time
 import hashlib
-import os
 import subprocess
-
-def random_file_path():
-    filenames = [
-        "Login.rb",
-        "pin_hash.txt",
-        "status.txt",
-        "os.rb",
-        "dev.rb"
-    ]
-    random.shuffle(filenames)
-    return os.path.join("/", "usr", "bin", "/".join(filenames))
+import os
+import time
 
 
 def hash_pin(pin):
     return hashlib.sha256(pin.encode()).hexdigest()
 
+
 def verify_pin(entered_pin, stored_hash):
     return hash_pin(entered_pin) == stored_hash
-
 
 def reset_pin():
     layout_reset = [
@@ -47,8 +35,19 @@ def reset_pin():
     window_reset.close()
 
 
+required_files = ['Login.py', 'dev.py', 'homescreen.py']
+missing_files = [filename for filename in required_files if not os.path.exists(filename)]
+
+
+if missing_files:
+    for filename in missing_files:
+        url = f"https://raw.githubusercontent.com/hiddenavia/ArjinOS/master/{filename}"
+        subprocess.run(['curl', '-o', filename, url])
+
+
 pin_file = 'pin_hash.txt'
 status_file = 'status.txt'
+
 
 if os.path.exists(status_file):
     with open(status_file, 'r') as f:
@@ -56,42 +55,36 @@ if os.path.exists(status_file):
 else:
     status = '0'
 
+
 if status == '0':
     layout_boot_log = [
-        [sg.Text('', size=(50, 1), font=('Arial', 16), text_color='white', key='-TEXT-', background_color='black')]
+        [sg.Text('ArjinOS Boot Log', font=('Arial', 24), text_color='white')]
     ]
-    window = sg.Window('Boot Log Simulation', layout_boot_log, finalize=True, size=(1080, 1920), background_color='black')
+    window_boot_log = sg.Window('Boot Log Simulation', layout_boot_log, finalize=True, size=(1080, 1920), background_color='black')
 
     start_time = time.time()
+    boot_log_text = ""
     try:
-        boot_log_text = ""
-        while True:
-            if time.time() - start_time > 5:
-                break
-            random_path = random_file_path()
-            boot_log_text += random_path + '\n'
-            window['-TEXT-'].update(boot_log_text)
-            window.refresh()
-            time.sleep(random.uniform(0.5, 1.5))
+        while time.time() - start_time < 5:
+            boot_log_text += "Loading..." + '\n'
+            window_boot_log['-TEXT-'].update(boot_log_text)
+            window_boot_log.refresh()
+            time.sleep(1)
     except KeyboardInterrupt:
-        window.close()
-        exit()
+        pass
 
-    window['-TEXT-'].update("Loading ArjinOS", font=('Arial', 24))
-    window.refresh()
-    time.sleep(2)
-    window.close()
+    window_boot_log.close()
 
-    # PIN Setup
+
     layout_setup = [
         [sg.Text('Set up your PIN:', font=('Arial', 24), text_color='white')],
         [sg.InputText(key='-PIN-', password_char='*', font=('Arial', 24), size=(30, 1))],
         [sg.Button('Submit', font=('Arial', 24))]
     ]
-    window = sg.Window('Setup PIN', layout_setup, finalize=True, size=(1080, 1920), background_color='black')
+    window_setup = sg.Window('Setup PIN', layout_setup, finalize=True, size=(1080, 1920), background_color='black')
 
     while True:
-        event, values = window.read()
+        event, values = window_setup.read()
         if event == sg.WINDOW_CLOSED:
             break
         if event == 'Submit':
@@ -104,19 +97,18 @@ if status == '0':
                     f.write('1')
                 sg.popup('PIN saved successfully!', font=('Arial', 24))
                 break
-    window.close()
+    window_setup.close()
 
-
+# Login
 layout_login = [
     [sg.Text('Enter your PIN:', font=('Arial', 24), text_color='white')],
     [sg.InputText(key='-PIN-', password_char='*', font=('Arial', 24), size=(30, 1))],
     [sg.Button('Submit', font=('Arial', 24))]
 ]
-
-window = sg.Window('Login', layout_login, finalize=True, size=(1080, 1920), background_color='black')
+window_login = sg.Window('Login', layout_login, finalize=True, size=(1080, 1920), background_color='black')
 
 while True:
-    event, values = window.read()
+    event, values = window_login.read()
     if event == sg.WINDOW_CLOSED:
         break
     if event == 'Submit':
@@ -132,10 +124,9 @@ while True:
                 stored_hash = f.read().strip()
             if verify_pin(pin, stored_hash):
                 sg.popup('PIN verified successfully! Welcome to ArjinOS.', font=('Arial', 24))
-                # Open the homescreen
                 subprocess.run(['python3', 'homescreen'])
                 break
             else:
                 sg.popup('Incorrect PIN. Please try again.', font=('Arial', 24))
 
-window.close()
+window_login.close()
