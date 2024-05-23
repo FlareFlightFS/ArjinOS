@@ -1,17 +1,1 @@
-import PySimpleGUI as sg
-
-layout_homescreen = [
-    [sg.Text('Welcome to ArjinOS!', font=('Arial', 20))],
-    [sg.Button('Access Feature 1')],
-    [sg.Button('Access Feature 2')],
-    [sg.Button('Access Feature 3')],
-    [sg.Button('Logout')]
-]
-
-window = sg.Window('ArjinOS Homescreen', layout_homescreen)
-
-while True:
-    event, values = window.read()
-    if event == sg.WINDOW_CLOSED or event == 'Logout':
-        break
-window.close()
+# soon
